@@ -16,8 +16,6 @@ import (
 var (
 	// ErrBadRouting is used when a client sends a bad routing.
 	ErrBadRouting = errors.New("Error bad routing")
-	// ErrNotFound is used when a client could not be found.
-	ErrNotFound   = errors.New("Asset not found\n")
 	// ErrBadRequest is used when a client send a bad request.
 	ErrBadRequest = errors.New("Bad Request")
 	// ErrUnknown is used when a client is unknown.
@@ -30,20 +28,20 @@ func MakeHandler(svc SessionMgmntService, repo SessionMgmntRepository, logger ki
 	mux := http.NewServeMux()
 
 	createHandler := httptransport.NewServer(
-			makeCreateEndpoint(svc),
+		MakeCreateEndpoint(svc),
 		decodeHTTPCreateRequest,
-			encodeResponse)
+		encodeResponse)
 	destroyHandler := httptransport.NewServer(
-		makeDestroyEndpoint(svc),
-		decodeHTTPCreateRequest,
+		MakeDestroyEndpoint(svc),
+		decodeHTTPDestroyRequest,
 		encodeResponse)
 	extendHandler := httptransport.NewServer(
-		makeExtendEndpoint(svc),
-		decodeHTTPCreateRequest,
+		MakeExtendEndpoint(svc),
+		decodeHTTPExtendRequest,
 		encodeResponse)
 	listHandler := httptransport.NewServer(
-		makeListEndpoint(svc),
-		decodeHTTPCreateRequest,
+		MakeListEndpoint(svc),
+		decodeHTTPListRequest,
 		encodeResponse)
 
 	mux.Handle("/create", createHandler)
@@ -60,17 +58,17 @@ func MakeHandler(svc SessionMgmntService, repo SessionMgmntRepository, logger ki
 // JSON-encoded signup request from the HTTP request body. Primarily useful in a
 // server.
 func decodeHTTPCreateRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var user Session
+	var session SessionRequest
 
 	if r.Body == nil {
 		return nil, ErrBadRequest
 	}
 
-	err := json.NewDecoder(r.Body).Decode(&user)
+	err := json.NewDecoder(r.Body).Decode(&session)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	} else {
-		return user, nil
+		return session, nil
 	}
 }
 
@@ -78,17 +76,17 @@ func decodeHTTPCreateRequest(_ context.Context, r *http.Request) (interface{}, e
 // JSON-encoded signup request from the HTTP request body. Primarily useful in a
 // server.
 func decodeHTTPDestroyRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var user Session
+	var destroyRequest DestroyRequest
 
 	if r.Body == nil {
 		return nil, ErrBadRequest
 	}
 
-	err := json.NewDecoder(r.Body).Decode(&user)
+	err := json.NewDecoder(r.Body).Decode(&destroyRequest)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	} else {
-		return user, nil
+		return destroyRequest, nil
 	}
 }
 
@@ -96,17 +94,17 @@ func decodeHTTPDestroyRequest(_ context.Context, r *http.Request) (interface{}, 
 // JSON-encoded signup request from the HTTP request body. Primarily useful in a
 // server.
 func decodeHTTPExtendRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var user Session
+	var extendRequest ExtendRequest
 
 	if r.Body == nil {
 		return nil, ErrBadRequest
 	}
 
-	err := json.NewDecoder(r.Body).Decode(&user)
+	err := json.NewDecoder(r.Body).Decode(&extendRequest)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	} else {
-		return user, nil
+		return extendRequest, nil
 	}
 }
 
@@ -114,23 +112,23 @@ func decodeHTTPExtendRequest(_ context.Context, r *http.Request) (interface{}, e
 // JSON-encoded signup request from the HTTP request body. Primarily useful in a
 // server.
 func decodeHTTPListRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var user Session
+	var sessions Sessions
 
 	if r.Body == nil {
 		return nil, ErrBadRequest
 	}
 
-	err := json.NewDecoder(r.Body).Decode(&user)
+	err := json.NewDecoder(r.Body).Decode(&sessions)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	} else {
-		return user, nil
+		return sessions, nil
 	}
 }
 
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	if e, ok := response.(errorer); ok && e.error() != nil {
-		encodeError(ctx, e.error(), w)
+	if e := response.(*SessionMgmntResponse); e.Err != nil {
+		encodeError(ctx, e.Err, w)
 		return nil
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

@@ -14,8 +14,9 @@ import (
 	"github.com/oklog/oklog/pkg/group"
 
 	"github.com/hecomp/session-management/internal/util"
+	. "github.com/hecomp/session-management/pkg/in_memory"
 	. "github.com/hecomp/session-management/pkg/repository"
-	. "github.com/hecomp/session-management/pkg/session_management"
+	"github.com/hecomp/session-management/pkg/session_management"
 )
 
 func main() {
@@ -26,7 +27,7 @@ func main() {
 	fs := flag.NewFlagSet("sessionManagementSvc", flag.ExitOnError)
 
 	var (
-		httpAddr       = fs.String("http_response-addr", ":8081", "HTTP listen address")
+		httpAddr = fs.String("http_response-addr", ":8081", "HTTP listen address")
 	)
 
 	fs.Usage = util.UsageFor(fs, os.Args[0]+" [flags]")
@@ -41,19 +42,23 @@ func main() {
 	}
 
 	var (
-		sessionMgmntRepo = NewSessionMgmntRepository(logger)
+		inMemStore = NewInMemStore()
 	)
 
-	var sessionMgmnt SessionMgmntService
+	var (
+		sessionMgmntRepo = NewSessionMgmntRepository(inMemStore, logger)
+	)
+
+	var sessionMgmnt session_management.SessionMgmntService
 	{
-		sessionMgmnt = NewService(sessionMgmntRepo, logger)
-		sessionMgmnt = NewLoggingService(log.With(logger, "component", "sessionMgmnt"), sessionMgmnt)
+		sessionMgmnt = session_management.NewService(sessionMgmntRepo, logger)
+		sessionMgmnt = session_management.NewLoggingService(log.With(logger, "component", "sessionMgmnt"), sessionMgmnt)
 	}
 
 	httpLogger := log.With(logger, "component", "http")
 
 	var (
-		httpHandler = MakeHandler(sessionMgmnt, sessionMgmntRepo, httpLogger)
+		httpHandler = session_management.MakeHandler(sessionMgmnt, sessionMgmntRepo, httpLogger)
 	)
 
 	// Now we're to the part of the func main where we want to start actually
