@@ -9,17 +9,15 @@ import (
 	. "github.com/hecomp/session-management/internal/models"
 )
 
-// SessionInterval parameter controls how frequently expired session data is removed by the
-// background cleanup goroutine
-const SessionInterval = 2 * time.Minute
-
 // MemStore
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . MemStore
 type MemStore interface {
 	Commit(sessionId string, b []byte, expiration time.Time) error
 	Delete(sessionId string) error
 	Reset(sessionId string) error
 	Find(sessionId string) ([]byte, bool, error)
 	List() map[string]Item
+	Get() map[string]Item
 }
 
 // InMemStore represents the session in-memory store.
@@ -32,32 +30,18 @@ type InMemStore struct {
 
 // NewInMemStore returns a new InMemStore instance, with a background session cleanup goroutine that
 // runs every minute to remove expired session data.
-func NewInMemStore(logger log.Logger) *InMemStore {
+func NewInMemStore(sessionInterval time.Duration, logger log.Logger) *InMemStore {
 	m := &InMemStore{
 		items: make(map[string]Item),
 		logger: logger,
 	}
 
-	go m.startSessionCleanup(SessionInterval)
+	if sessionInterval > 0 {
+		go m.startSessionCleanup(sessionInterval)
+	}
 
 	return m
 }
-
-// NewWithCleanupInterval returns a new InMemStore instance. The cleanupInterval
-// parameter controls how frequently expired session data is removed by the
-// background cleanup goroutine. Setting it to 0 prevents the cleanup goroutine
-// from running (i.e. expired sessions will not be removed).
-//func NewWithCleanupInterval(cleanupInterval time.Duration) *InMemStore {
-//	m := &InMemStore{
-//		items: make(map[string]Item),
-//	}
-//
-//	if cleanupInterval > 0 {
-//		go m.startSessionCleanup(cleanupInterval)
-//	}
-//
-//	return m
-//}
 
 // Find returns the sessionId for a given session from the InMemStore instance.
 // If the session id is not found or is expired, the returned exists flag will
@@ -146,7 +130,7 @@ func (m *InMemStore) startSessionCleanup(interval time.Duration) {
 	for {
 		select {
 		case <-ticker.C:
-			m.deleteSessionExpired()
+			m.DeleteSessionExpired()
 		case <-m.stopCleanup:
 			ticker.Stop()
 			return
@@ -171,9 +155,9 @@ func (m *InMemStore) StopSessionCleanup() {
 	}
 }
 
-// deleteSessionExpired
-func (m *InMemStore) deleteSessionExpired() {
-	m.logger.Log("deleteSessionExpired")
+// DeleteSessionExpired
+func (m *InMemStore) DeleteSessionExpired() {
+	m.logger.Log("DeleteSessionExpired")
 	now := time.Now().UnixNano()
 	m.mu.Lock()
 	for sessionId, item := range m.items {
@@ -183,4 +167,8 @@ func (m *InMemStore) deleteSessionExpired() {
 		}
 	}
 	m.mu.Unlock()
+}
+
+func (m *InMemStore) Get() map[string]Item {
+	return m.items
 }
