@@ -59,26 +59,33 @@ type FakeMemStore struct {
 	getReturnsOnCall map[int]struct {
 		result1 map[string]models.Item
 	}
-	ListStub        func() map[string]models.Item
+	ListStub        func() (map[string]models.Item, error)
 	listMutex       sync.RWMutex
 	listArgsForCall []struct {
 	}
 	listReturns struct {
 		result1 map[string]models.Item
+		result2 error
 	}
 	listReturnsOnCall map[int]struct {
 		result1 map[string]models.Item
+		result2 error
 	}
-	ResetStub        func(string) error
+	ResetStub        func(string, time.Time) ([]byte, bool, error)
 	resetMutex       sync.RWMutex
 	resetArgsForCall []struct {
 		arg1 string
+		arg2 time.Time
 	}
 	resetReturns struct {
-		result1 error
+		result1 []byte
+		result2 bool
+		result3 error
 	}
 	resetReturnsOnCall map[int]struct {
-		result1 error
+		result1 []byte
+		result2 bool
+		result3 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
@@ -333,7 +340,7 @@ func (fake *FakeMemStore) GetReturnsOnCall(i int, result1 map[string]models.Item
 	}{result1}
 }
 
-func (fake *FakeMemStore) List() map[string]models.Item {
+func (fake *FakeMemStore) List() (map[string]models.Item, error) {
 	fake.listMutex.Lock()
 	ret, specificReturn := fake.listReturnsOnCall[len(fake.listArgsForCall)]
 	fake.listArgsForCall = append(fake.listArgsForCall, struct {
@@ -346,9 +353,9 @@ func (fake *FakeMemStore) List() map[string]models.Item {
 		return stub()
 	}
 	if specificReturn {
-		return ret.result1
+		return ret.result1, ret.result2
 	}
-	return fakeReturns.result1
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeMemStore) ListCallCount() int {
@@ -357,52 +364,56 @@ func (fake *FakeMemStore) ListCallCount() int {
 	return len(fake.listArgsForCall)
 }
 
-func (fake *FakeMemStore) ListCalls(stub func() map[string]models.Item) {
+func (fake *FakeMemStore) ListCalls(stub func() (map[string]models.Item, error)) {
 	fake.listMutex.Lock()
 	defer fake.listMutex.Unlock()
 	fake.ListStub = stub
 }
 
-func (fake *FakeMemStore) ListReturns(result1 map[string]models.Item) {
+func (fake *FakeMemStore) ListReturns(result1 map[string]models.Item, result2 error) {
 	fake.listMutex.Lock()
 	defer fake.listMutex.Unlock()
 	fake.ListStub = nil
 	fake.listReturns = struct {
 		result1 map[string]models.Item
-	}{result1}
+		result2 error
+	}{result1, result2}
 }
 
-func (fake *FakeMemStore) ListReturnsOnCall(i int, result1 map[string]models.Item) {
+func (fake *FakeMemStore) ListReturnsOnCall(i int, result1 map[string]models.Item, result2 error) {
 	fake.listMutex.Lock()
 	defer fake.listMutex.Unlock()
 	fake.ListStub = nil
 	if fake.listReturnsOnCall == nil {
 		fake.listReturnsOnCall = make(map[int]struct {
 			result1 map[string]models.Item
+			result2 error
 		})
 	}
 	fake.listReturnsOnCall[i] = struct {
 		result1 map[string]models.Item
-	}{result1}
+		result2 error
+	}{result1, result2}
 }
 
-func (fake *FakeMemStore) Reset(arg1 string) error {
+func (fake *FakeMemStore) Reset(arg1 string, arg2 time.Time) ([]byte, bool, error) {
 	fake.resetMutex.Lock()
 	ret, specificReturn := fake.resetReturnsOnCall[len(fake.resetArgsForCall)]
 	fake.resetArgsForCall = append(fake.resetArgsForCall, struct {
 		arg1 string
-	}{arg1})
+		arg2 time.Time
+	}{arg1, arg2})
 	stub := fake.ResetStub
 	fakeReturns := fake.resetReturns
-	fake.recordInvocation("Reset", []interface{}{arg1})
+	fake.recordInvocation("Reset", []interface{}{arg1, arg2})
 	fake.resetMutex.Unlock()
 	if stub != nil {
-		return stub(arg1)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
-		return ret.result1
+		return ret.result1, ret.result2, ret.result3
 	}
-	return fakeReturns.result1
+	return fakeReturns.result1, fakeReturns.result2, fakeReturns.result3
 }
 
 func (fake *FakeMemStore) ResetCallCount() int {
@@ -411,40 +422,46 @@ func (fake *FakeMemStore) ResetCallCount() int {
 	return len(fake.resetArgsForCall)
 }
 
-func (fake *FakeMemStore) ResetCalls(stub func(string) error) {
+func (fake *FakeMemStore) ResetCalls(stub func(string, time.Time) ([]byte, bool, error)) {
 	fake.resetMutex.Lock()
 	defer fake.resetMutex.Unlock()
 	fake.ResetStub = stub
 }
 
-func (fake *FakeMemStore) ResetArgsForCall(i int) string {
+func (fake *FakeMemStore) ResetArgsForCall(i int) (string, time.Time) {
 	fake.resetMutex.RLock()
 	defer fake.resetMutex.RUnlock()
 	argsForCall := fake.resetArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeMemStore) ResetReturns(result1 error) {
+func (fake *FakeMemStore) ResetReturns(result1 []byte, result2 bool, result3 error) {
 	fake.resetMutex.Lock()
 	defer fake.resetMutex.Unlock()
 	fake.ResetStub = nil
 	fake.resetReturns = struct {
-		result1 error
-	}{result1}
+		result1 []byte
+		result2 bool
+		result3 error
+	}{result1, result2, result3}
 }
 
-func (fake *FakeMemStore) ResetReturnsOnCall(i int, result1 error) {
+func (fake *FakeMemStore) ResetReturnsOnCall(i int, result1 []byte, result2 bool, result3 error) {
 	fake.resetMutex.Lock()
 	defer fake.resetMutex.Unlock()
 	fake.ResetStub = nil
 	if fake.resetReturnsOnCall == nil {
 		fake.resetReturnsOnCall = make(map[int]struct {
-			result1 error
+			result1 []byte
+			result2 bool
+			result3 error
 		})
 	}
 	fake.resetReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
+		result1 []byte
+		result2 bool
+		result3 error
+	}{result1, result2, result3}
 }
 
 func (fake *FakeMemStore) Invocations() map[string][][]interface{} {

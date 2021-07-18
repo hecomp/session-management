@@ -12,7 +12,7 @@ import (
 )
 
 type InMemStoreSuite struct {
-	mem *InMemStore
+	mem MemStore
 	logger log.Logger
 }
 
@@ -23,7 +23,6 @@ var _ = Describe("InMemory", func() {
 	BeforeEach(func() {
 		s.logger = test.GetLogger()
 		s.mem = NewInMemStore(0, s.logger)
-
 	})
 
 	Describe("Create session", func() {

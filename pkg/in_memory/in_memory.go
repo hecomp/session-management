@@ -14,9 +14,9 @@ import (
 type MemStore interface {
 	Commit(sessionId string, b []byte, expiration time.Time) error
 	Delete(sessionId string) error
-	Reset(sessionId string) error
+	Reset(sessionId string, expiration time.Time) ([]byte, bool, error)
 	Find(sessionId string) ([]byte, bool, error)
-	List() map[string]Item
+	List() (map[string]Item, error)
 	Get() map[string]Item
 }
 
@@ -30,7 +30,7 @@ type InMemStore struct {
 
 // NewInMemStore returns a new InMemStore instance, with a background session cleanup goroutine that
 // runs every minute to remove expired session data.
-func NewInMemStore(sessionInterval time.Duration, logger log.Logger) *InMemStore {
+func NewInMemStore(sessionInterval time.Duration, logger log.Logger) MemStore {
 	m := &InMemStore{
 		items: make(map[string]Item),
 		logger: logger,
@@ -130,7 +130,7 @@ func (m *InMemStore) startSessionCleanup(interval time.Duration) {
 	for {
 		select {
 		case <-ticker.C:
-			m.DeleteSessionExpired()
+			m.deleteSessionExpired()
 		case <-m.stopCleanup:
 			ticker.Stop()
 			return
@@ -155,9 +155,9 @@ func (m *InMemStore) StopSessionCleanup() {
 	}
 }
 
-// DeleteSessionExpired
-func (m *InMemStore) DeleteSessionExpired() {
-	m.logger.Log("DeleteSessionExpired")
+// deleteSessionExpired
+func (m *InMemStore) deleteSessionExpired() {
+	m.logger.Log("deleteSessionExpired")
 	now := time.Now().UnixNano()
 	m.mu.Lock()
 	for sessionId, item := range m.items {
