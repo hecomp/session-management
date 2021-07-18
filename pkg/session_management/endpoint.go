@@ -36,9 +36,9 @@ func MakeDestroyEndpoint(service SessionMgmntService) endpoint.Endpoint {
 
 		resp, err := service.Destroy(&session)
 		if err != nil {
-			return SessionMgmntResponse{ Message: resp.Message, Err: resp.Err }, nil
+			return &SessionMgmntResponse{ Message: resp.Message, Err: resp.Err }, nil
 		}
-		return SessionMgmntResponse{Message: resp.Message, Data: resp.Data }, nil
+		return &SessionMgmntResponse{Message: resp.Message, Data: resp.Data }, nil
 	}
 }
 
@@ -49,9 +49,9 @@ func MakeExtendEndpoint(service SessionMgmntService) endpoint.Endpoint {
 
 		resp, err := service.Extend(&session)
 		if err != nil {
-			return SessionMgmntResponse{ Message: resp.Message, Err: resp.Err }, nil
+			return &SessionMgmntResponse{ Message: resp.Message, Err: resp.Err }, nil
 		}
-		return SessionMgmntResponse{Message: resp.Message, Data: resp.Data }, nil
+		return &SessionMgmntResponse{Message: resp.Message, Data: resp.Data }, nil
 	}
 }
 
@@ -60,9 +60,9 @@ func MakeListEndpoint(service SessionMgmntService) endpoint.Endpoint {
 	return func(_ context.Context, request interface{})(interface{},  error) {
 		resp, err := service.List()
 		if err != nil {
-			return SessionMgmntResponse{ Message: resp.Message, Err: resp.Err }, nil
+			return &SessionMgmntResponse{ Message: resp.Message, Err: resp.Err }, nil
 		}
-		return SessionMgmntResponse{Message: resp.Message, Data: resp.Data }, nil
+		return &SessionMgmntResponse{Message: resp.Message, Data: resp.Data }, nil
 	}
 }
 

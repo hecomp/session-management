@@ -113,21 +113,12 @@ func decodeHTTPExtendRequest(_ context.Context, r *http.Request) (interface{}, e
 // server.
 func decodeHTTPListRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var sessions Sessions
-
-	if r.Body == nil {
-		return nil, ErrBadRequest
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&sessions)
-	if err != nil {
-		return nil, errors.New(err.Error())
-	} else {
-		return sessions, nil
-	}
+	return sessions, nil
 }
 
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	if e := response.(*SessionMgmntResponse); e.Err != nil {
+	e := response.(*SessionMgmntResponse)
+	if e.Err != nil {
 		encodeError(ctx, e.Err, w)
 		return nil
 	}

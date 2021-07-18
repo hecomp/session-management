@@ -42,7 +42,7 @@ func main() {
 	}
 
 	var (
-		inMemStore = NewInMemStore()
+		inMemStore = NewInMemStore(logger)
 	)
 
 	var (

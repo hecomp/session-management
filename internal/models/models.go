@@ -1,5 +1,11 @@
 package models
 
+// Item
+type Item struct {
+	Oject      []byte
+	Expiration int64
+}
+
 // SessionRequest  represents th etype for the TTL as an optional param to create
 type SessionRequest struct {
 	TTL int64 `json:"ttl"`
