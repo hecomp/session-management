@@ -33,6 +33,7 @@ var (
 
 
 // SessionMgmntService is the interface that provides session management APIs.
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . SessionMgmntService
 type SessionMgmntService interface {
 	Create(session *SessionRequest) (*SessionMgmntResponse, error)
 	Destroy(session *DestroyRequest) (*SessionMgmntResponse, error)
@@ -57,8 +58,7 @@ func (s sessionMgmntService) Create(session *SessionRequest) (*SessionMgmntRespo
 		session.TTL = DefaultTime
 	}
 
-	sessionId := uuid.Must(uuid.NewRandom()).String()
-
+	sessionId := s.GenerateSessionId()
 	expiration := time.Now().Add(time.Second * time.Duration(session.TTL))
 	if err := s.repo.Create(sessionId, expiration); err != nil {
 		s.logger.Log("message", "unable to create session to in-memory store", "error", err)
@@ -98,7 +98,7 @@ func (s sessionMgmntService) Extend(request *ExtendRequest) (*SessionMgmntRespon
 	found, err := s.repo.Exist(request.SessionId)
 	if err != nil {
 		s.logger.Log("message", "unable to find session to in-memory store", "error", err)
-		return &SessionMgmntResponse{ Message: ErrEmpty.Error() }, err
+		return &SessionMgmntResponse{ Message: ErrEmpty.Error(), Err: err }, err
 	}
 	if !found {
 		s.logger.Log("message", "not found session to in-memory store", "error", err)
@@ -120,5 +120,10 @@ func (s sessionMgmntService) List() (*SessionMgmntResponse, error) {
 		return &SessionMgmntResponse{ Message: ErrList }, errors.New(ErrList)
 	}
 	return &SessionMgmntResponse{ Message: ListSessionSuccess, Data: sessions }, nil
+}
+
+// GenerateSessionId
+func (s *sessionMgmntService) GenerateSessionId() string {
+	return uuid.Must(uuid.NewRandom()).String()
 }
 

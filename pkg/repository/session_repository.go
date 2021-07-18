@@ -19,6 +19,7 @@ var (
 )
 
 // SessionMgmntRepository
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . SessionMgmntRepository
 type SessionMgmntRepository interface {
 	Create(sessionId string, expiration time.Time) error
 	Destroy(session *DestroyRequest) error
@@ -29,12 +30,12 @@ type SessionMgmntRepository interface {
 
 // AuthRepository has the implementation of the db methods.
 type sessionMgmntRepository struct {
-	store *in_memory.InMemStore
+	store in_memory.MemStore
 	logger log.Logger
 }
 
 // NewSessionMgmntRepository
-func NewSessionMgmntRepository(store *in_memory.InMemStore, logger log.Logger) SessionMgmntRepository {
+func NewSessionMgmntRepository(store in_memory.MemStore, logger log.Logger) SessionMgmntRepository {
 	return &sessionMgmntRepository{store: store, logger: logger}
 }
 

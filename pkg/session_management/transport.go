@@ -6,11 +6,9 @@ import (
 	"errors"
 	"net/http"
 
-	kitlog "github.com/go-kit/kit/log"
 	httptransport "github.com/go-kit/kit/transport/http"
 
 	. "github.com/hecomp/session-management/internal/models"
-	. "github.com/hecomp/session-management/pkg/repository"
 )
 
 var (
@@ -23,7 +21,7 @@ var (
 )
 
 // MakeHandler
-func MakeHandler(svc SessionMgmntService, repo SessionMgmntRepository, logger kitlog.Logger) http.Handler {
+func MakeHandler(svc SessionMgmntService) http.Handler {
 
 	mux := http.NewServeMux()
 
