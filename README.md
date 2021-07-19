@@ -202,9 +202,14 @@ http://localhost:8081/list
 Response
 ```json
 {
-    "Message": "Session Listed Successfully",
+    "Message": "session listed successfully",
     "data": {
-        "list": null
-    }
+        "list": [
+            "29ec4576-1697-494c-8f1b-85f000825c1e",
+            "031a02d0-1044-408c-98ae-8063765c8026",
+            "bb25a87e-d5fb-4ed4-964f-dfda465be1f7"
+        ]
+    },
+    "status_code": 200
 }
 ```
