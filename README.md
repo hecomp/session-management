@@ -119,7 +119,75 @@ Expect(err).To(Equal(errors.New("the-error")))
 ### APIs
 | Endpoint | Method | Route     |
 | :--------| :------| :---------|
-| Create   | GET    | /create   |
-| Destroy  | GET    | /destroy  |
+| Create   | POST    | /create  |
+| Destroy  | POST    | /destroy |
 | Extend   | POST   | /extend   |
-| List     | POST   | /list     |
+| List     | GET   | /list      |
+
+Postmant
+```
+http://localhost:8081/create
+```
+Request
+```json
+{
+    "ttl": 30
+}
+```
+Response
+```json
+{
+    "Message": "Session Created Successfully",
+    "data": {
+        "session_id": "90660b89-100e-4f8f-9801-2524df6fbe34"
+    }
+}
+```
+```
+http://localhost:8081/destroy
+```
+Request
+```json
+{
+    "session_id": "bf7b6874-b08b-4e22-85e5-890c0c6b970f"
+}
+```
+Response
+```json
+{
+    "Message": "Session Destroyed Successfully",
+    "data": null
+}
+```
+
+```
+http://localhost:8081/extend
+```
+Request
+```json
+{
+    "ttl": 400,
+    "session_id": "261ac718-4d5e-4848-9dc0-d067156f1baf"
+}
+```
+
+Response
+```json
+{
+    "Message": "Session Extended Successfully",
+    "data": null
+}
+```
+
+```
+http://localhost:8081/list
+```
+Response
+```json
+{
+    "Message": "Session Listed Successfully",
+    "data": {
+        "list": null
+    }
+}
+```
