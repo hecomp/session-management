@@ -1,20 +1,22 @@
-package test_test
+package tests_test
 
 import (
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
 )
 
-func TestEndpoint(t *testing.T) {
+func TestTransport(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Endpoint Suite")
+	RunSpecs(t, "Transport Suite")
 }
 
-var _ = Describe("Endpoint", func() {
+type Transport struct {
 
+}
+
+var _ = Describe("Transport", func() {
 
 	BeforeEach(func() {
 

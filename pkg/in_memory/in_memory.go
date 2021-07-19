@@ -144,9 +144,9 @@ func (m *InMemStore) startSessionCleanup(interval time.Duration) {
 // of your application.
 //
 // There may be occasions though when your use of the InMemStore is transient.
-// An example is creating a new InMemStore instance in a test function. In this
+// An example is creating a new InMemStore instance in a tests function. In this
 // scenario, the cleanup goroutine (which will run forever) will prevent the
-// InMemStore object from being garbage collected even after the test function
+// InMemStore object from being garbage collected even after the tests function
 // has finished. You can prevent this by manually calling StopSessionCleanup.
 func (m *InMemStore) StopSessionCleanup() {
 	m.logger.Log("stopCleanup")

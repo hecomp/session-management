@@ -20,25 +20,20 @@ const (
 var (
 	// ErrInvalidArgument is returned when one or more arguments are invalid.
     ErrInvalidArgument    = errors.New("invalid argument")
- 	ErrUserAlreadyExists  = fmt.Sprintf("User already exists with the given email")
-	ErrDestroy            = fmt.Sprintf("Error destroying session id")
-	ErrExtend             = fmt.Sprintf("Error extending session")
-	ErrList              = fmt.Sprintf("Error listing session")
-
-    CreateSessionSuccess  = fmt.Sprintf("Session Created Successfully")
-	DestroySessionSuccess = fmt.Sprintf("Session Destroyed Successfully")
-	ExtendSessionSuccess = fmt.Sprintf("Session Extended Successfully")
-	ListSessionSuccess = fmt.Sprintf("Session Listed Successfully")
+ 	ErrUserAlreadyExists  = fmt.Sprintf("user already exists with the given email")
+	ErrDestroy            = errors.New("error destroying session id")
+	ErrExtend             = errors.New("error extending session")
+	ErrList               = errors.New("error listing session")
 )
 
 
 // SessionMgmntService is the interface that provides session management APIs.
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . SessionMgmntService
 type SessionMgmntService interface {
-	Create(session *SessionRequest) (*SessionMgmntResponse, error)
-	Destroy(session *DestroyRequest) (*SessionMgmntResponse, error)
-	Extend(request *ExtendRequest) (*SessionMgmntResponse, error)
-	List() (*SessionMgmntResponse, error)
+	Create(session *SessionRequest) (string, error)
+	Destroy(session *DestroyRequest) error
+	Extend(request *ExtendRequest) error
+	List() (*Sessions, error)
 }
 
 // sessionMgmntService
@@ -53,7 +48,7 @@ func NewService(repo SessionMgmntRepository, logger log.Logger) SessionMgmntServ
 }
 
 // Create
-func (s sessionMgmntService) Create(session *SessionRequest) (*SessionMgmntResponse, error) {
+func (s sessionMgmntService) Create(session *SessionRequest) (string, error) {
 	if session.TTL == 0 {// default should be 30 seconds
 		session.TTL = DefaultTime
 	}
@@ -62,29 +57,39 @@ func (s sessionMgmntService) Create(session *SessionRequest) (*SessionMgmntRespo
 	expiration := time.Now().Add(time.Second * time.Duration(session.TTL))
 	if err := s.repo.Create(sessionId, expiration); err != nil {
 		s.logger.Log("message", "unable to create session to in-memory store", "error", err)
-		return &SessionMgmntResponse{ Message: ErrEmpty.Error(), Err: err}, err
+		return "", ErrEmpty
 	}
 
-	return &SessionMgmntResponse{ Message: CreateSessionSuccess, Data: &Session{ SessionId: sessionId } }, nil
+	return sessionId, nil
 }
 
 // Destroy
-func (s sessionMgmntService) Destroy(session *DestroyRequest) (*SessionMgmntResponse, error) {
+func (s sessionMgmntService) Destroy(session *DestroyRequest) error {
 	if session.SessionId == "" {
-		return &SessionMgmntResponse{ Message: ErrEmpty.Error() }, nil
+		return ErrEmpty
+	}
+
+	found, err := s.repo.Exist(session.SessionId)
+	if err != nil {
+		s.logger.Log("message", "unable to find session to in-memory store", "error", err)
+		return ErrExist
+	}
+	if !found {
+		s.logger.Log("message", "not found session to in-memory store", "error", ErrNotFound.Error())
+		return ErrNotFound
 	}
 
 	if err := s.repo.Destroy(session); err != nil {
 		s.logger.Log("message", "unable to destroy session in the in-memory store", "error", err)
-		return &SessionMgmntResponse{ Message: ErrDestroy, Err: err}, err
+		return ErrDestroy
 	}
-	return &SessionMgmntResponse{ Message: DestroySessionSuccess }, nil
+	return nil
 }
 
 // Extend with the provided TTL or if the TTL is not provided then by 30 seconds
-func (s sessionMgmntService) Extend(request *ExtendRequest) (*SessionMgmntResponse, error) {
+func (s sessionMgmntService) Extend(request *ExtendRequest) error {
 	if request.SessionId == "" {
-		return &SessionMgmntResponse{ Message: ErrEmpty.Error() }, nil
+		return ErrEmpty
 	}
 
 	if request.TTL == 0 {
@@ -95,31 +100,26 @@ func (s sessionMgmntService) Extend(request *ExtendRequest) (*SessionMgmntRespon
 		request.TTL = MaxTTL
 	}
 
-	found, err := s.repo.Exist(request.SessionId)
+	found, err := s.repo.Extend(request)
 	if err != nil {
-		s.logger.Log("message", "unable to find session to in-memory store", "error", err)
-		return &SessionMgmntResponse{ Message: ErrEmpty.Error(), Err: err }, err
+		s.logger.Log("message", "unable to extend session to in-memory store", "error", err)
+		return ErrExtend
 	}
 	if !found {
-		s.logger.Log("message", "not found session to in-memory store", "error", err)
-		return &SessionMgmntResponse{ Message: ErrNotFound.Error() }, ErrNotFound
+		s.logger.Log("message", "not found session to in-memory store", "error", ErrNotFound.Error())
+		return ErrNotFound
 	}
-
-	if err := s.repo.Extend(request); err != nil {
-		s.logger.Log("message", "unable to extend session to in-memory store", "error", err)
-		return &SessionMgmntResponse{ Message: ErrExtend }, errors.New(ErrExtend)
-	}
-	return &SessionMgmntResponse{ Message: ExtendSessionSuccess }, nil
+	return nil
 }
 
 // List
-func (s sessionMgmntService) List() (*SessionMgmntResponse, error) {
+func (s sessionMgmntService) List() (*Sessions, error) {
 	sessions, err := s.repo.List()
 	if err != nil {
 		s.logger.Log("message", "unable to list sessions from in-memory store", "error", err)
-		return &SessionMgmntResponse{ Message: ErrList }, errors.New(ErrList)
+		return nil, ErrList
 	}
-	return &SessionMgmntResponse{ Message: ListSessionSuccess, Data: sessions }, nil
+	return sessions, nil
 }
 
 // GenerateSessionId
