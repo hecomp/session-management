@@ -60,7 +60,7 @@ func MakeDestroyEndpoint(service SessionMgmntService) endpoint.Endpoint {
 	}
 }
 
-// MakeExtendEndpoint extend TTL
+// MakeExtendEndpoint session id with the provided TTL
 func MakeExtendEndpoint(service SessionMgmntService) endpoint.Endpoint {
 	return func(_ context.Context, request interface{})(interface{}, error) {
 		session := request.(ExtendRequest)
@@ -84,6 +84,8 @@ func MakeListEndpoint(service SessionMgmntService) endpoint.Endpoint {
 	}
 }
 
+// getStatusCode will return a respective status code
+// based on given error
 func getStatusCode(err error) int {
 	var statusCode int
 

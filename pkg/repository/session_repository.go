@@ -35,7 +35,7 @@ type sessionMgmntRepository struct {
 	logger log.Logger
 }
 
-// NewSessionMgmntRepository
+// NewSessionMgmntRepository create a instance of session management repository
 func NewSessionMgmntRepository(store in_memory.MemStore, logger log.Logger) SessionMgmntRepository {
 	return &sessionMgmntRepository{store: store, logger: logger}
 }
@@ -60,7 +60,7 @@ func (s *sessionMgmntRepository) Destroy(session *DestroyRequest) error {
 	return nil
 }
 
-// Extend with the provided TTL
+// Extend session id with the provided TTL
 func (s *sessionMgmntRepository) Extend(request *ExtendRequest) (bool, error) {
 	expiration := time.Now().Add(time.Second * time.Duration(request.TTL))
 	obj, found, err := s.store.Reset(request.SessionId, expiration)
@@ -76,7 +76,7 @@ func (s *sessionMgmntRepository) Extend(request *ExtendRequest) (bool, error) {
 	return true, nil
 }
 
-// Exist
+// Exist if the session exists
 func (s *sessionMgmntRepository) Exist(sessionId string) (bool, error) {
 	b, found, err := s.store.Find(sessionId)
 	if err != nil {

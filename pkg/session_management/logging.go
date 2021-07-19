@@ -8,18 +8,18 @@ import (
 	"github.com/hecomp/session-management/internal/models"
 )
 
-//loggingService
+//loggingService has the implementation of the logging middleware methods.
 type loggingService struct {
 	logger log.Logger
 	SessionMgmntService
 }
 
-//NewLoggingService
+//NewLoggingService create a instance of logging service
 func NewLoggingService(logger log.Logger, s SessionMgmntService) SessionMgmntService {
 	return &loggingService{logger: logger, SessionMgmntService: s}
 }
 
-// Create
+// Create session is stored in-memory
 func (s *loggingService) Create(session *models.SessionRequest) (sig string, err error)  {
 	defer func(begin time.Time) {
 		s.logger.Log(
@@ -31,7 +31,7 @@ func (s *loggingService) Create(session *models.SessionRequest) (sig string, err
 	return s.SessionMgmntService.Create(session)
 }
 
-//Destroy
+//Destroy remove the session from its cache
 func (s *loggingService) Destroy(session *models.DestroyRequest) (err error)  {
 	defer func(begin time.Time) {
 		s.logger.Log(
@@ -43,7 +43,7 @@ func (s *loggingService) Destroy(session *models.DestroyRequest) (err error)  {
 	return s.SessionMgmntService.Destroy(session)
 }
 
-//Extend
+//Extend session id with the provided TTL
 func (s *loggingService) Extend(session *models.ExtendRequest) (err error)  {
 	defer func(begin time.Time) {
 		s.logger.Log(

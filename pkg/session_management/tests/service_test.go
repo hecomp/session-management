@@ -179,6 +179,15 @@ var _ = Describe("Service", func() {
 				Expect(err).To(BeNil())
 				Expect(res).To(Equal(sessions))
 			})
+			It("error not found list in-memory store", func() {
+				sessionMap := map[string]Item{}
+				sessions := test.ConvertMapToList(sessionMap)
+				s.fakeRepo.ListReturns(sessions, nil)
+				res, err := s.service.List()
+				Expect(err).ToNot(BeNil())
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(ErrNotFound))
+			})
 			It("error list an unique sessionId in-memory store", func() {
 				sessionMap := map[string]Item{}
 				sessions := test.ConvertMapToList(sessionMap)

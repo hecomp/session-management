@@ -114,7 +114,7 @@ func (m *InMemStore) Reset(sessionId string, expiration time.Time) ([]byte, bool
 	
 }
 
-// List
+// List return a list of all the sessions from in-mem store
 func (m *InMemStore) List() (map[string]Item, error) {
 	m.logger.Log("method", "list")
 	m.mu.RLock()
@@ -122,7 +122,7 @@ func (m *InMemStore) List() (map[string]Item, error) {
 	return m.items, nil
 }
 
-// startSessionCleanup
+// startSessionCleanup only the sessions that have not expired are expected to be kept in memory
 func (m *InMemStore) startSessionCleanup(interval time.Duration) {
 	m.logger.Log("method", "startSessionCleanup")
 	m.stopCleanup = make(chan bool)
@@ -138,16 +138,7 @@ func (m *InMemStore) startSessionCleanup(interval time.Duration) {
 	}
 }
 
-// StopSessionCleanup terminates the background cleanup goroutine for the InMemStore
-// instance. It's rare to terminate this; generally InMemStore instances and
-// their cleanup goroutines are intended to be long-lived and run for the lifetime
-// of your application.
-//
-// There may be occasions though when your use of the InMemStore is transient.
-// An example is creating a new InMemStore instance in a tests function. In this
-// scenario, the cleanup goroutine (which will run forever) will prevent the
-// InMemStore object from being garbage collected even after the tests function
-// has finished. You can prevent this by manually calling StopSessionCleanup.
+// StopSessionCleanup terminates the background cleanup goroutine for the InMemStore instance.
 func (m *InMemStore) StopSessionCleanup() {
 	m.logger.Log("stopCleanup")
 	if m.stopCleanup != nil {
@@ -155,7 +146,7 @@ func (m *InMemStore) StopSessionCleanup() {
 	}
 }
 
-// deleteSessionExpired
+// deleteSessionExpired any expired sessions should be removed automatically
 func (m *InMemStore) deleteSessionExpired() {
 	m.logger.Log("deleteSessionExpired")
 	now := time.Now().UnixNano()

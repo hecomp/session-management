@@ -36,18 +36,18 @@ type SessionMgmntService interface {
 	List() (*Sessions, error)
 }
 
-// sessionMgmntService
+// sessionMgmntService has the implementation of the service methods
 type sessionMgmntService struct {
 	logger log.Logger
 	repo   SessionMgmntRepository
 }
 
-// NewService
+// NewService create a instance of session management service
 func NewService(repo SessionMgmntRepository, logger log.Logger) SessionMgmntService {
 	return &sessionMgmntService{repo: repo, logger: logger}
 }
 
-// Create
+// Create session is stored in-memory
 func (s sessionMgmntService) Create(session *SessionRequest) (string, error) {
 	if session.TTL == 0 {// default should be 30 seconds
 		session.TTL = DefaultTime
@@ -63,7 +63,7 @@ func (s sessionMgmntService) Create(session *SessionRequest) (string, error) {
 	return sessionId, nil
 }
 
-// Destroy
+// Destroy remove the session from its cache
 func (s sessionMgmntService) Destroy(session *DestroyRequest) error {
 	if session.SessionId == "" {
 		return ErrEmpty
@@ -112,17 +112,21 @@ func (s sessionMgmntService) Extend(request *ExtendRequest) error {
 	return nil
 }
 
-// List
+// List return a list of all the sessions that the service is currently tracking
 func (s sessionMgmntService) List() (*Sessions, error) {
 	sessions, err := s.repo.List()
 	if err != nil {
 		s.logger.Log("message", "unable to list sessions from in-memory store", "error", err)
 		return nil, ErrList
 	}
+
+	if len(sessions.List) == 0 {
+		return nil, ErrNotFound
+	}
 	return sessions, nil
 }
 
-// GenerateSessionId
+// GenerateSessionId a unique session-id which should be UUID based
 func (s *sessionMgmntService) GenerateSessionId() string {
 	return uuid.Must(uuid.NewRandom()).String()
 }
