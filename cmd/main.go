@@ -64,18 +64,6 @@ func main() {
 		httpHandler = session_management.MakeHandler(sessionMgmnt)
 	)
 
-	// Now we're to the part of the func main where we want to start actually
-	// running things, like servers bound to listeners to receive connections.
-	//
-	// The method is the same for each component: add a new actor to the group
-	// struct, which is a combination of 2 anonymous functions: the first
-	// function actually runs the component, and the second function should
-	// interrupt the first function and cause it to return. It's in these
-	// functions that we actually bind the Go kit server/handler structs to the
-	// concrete transports and run them.
-	//
-	// Putting each component into its own block is mostly for aesthetics: it
-	// clearly demarcates the scope in which each listener/socket may be used.
 	var g group.Group
 	{
 		// The HTTP listener mounts the Go kit HTTP handler we created.
