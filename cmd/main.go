@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/go-kit/kit/log"
 
@@ -18,6 +19,10 @@ import (
 	. "github.com/hecomp/session-management/pkg/repository"
 	"github.com/hecomp/session-management/pkg/session_management"
 )
+
+// SessionInterval parameter controls how frequently expired session data is removed by the
+// background cleanup goroutine
+const SessionInterval = 2 * time.Minute
 
 func main() {
 
@@ -42,7 +47,7 @@ func main() {
 	}
 
 	var (
-		inMemStore = NewInMemStore()
+		inMemStore = NewInMemStore(SessionInterval, logger)
 	)
 
 	var (
@@ -55,10 +60,8 @@ func main() {
 		sessionMgmnt = session_management.NewLoggingService(log.With(logger, "component", "sessionMgmnt"), sessionMgmnt)
 	}
 
-	httpLogger := log.With(logger, "component", "http")
-
 	var (
-		httpHandler = session_management.MakeHandler(sessionMgmnt, sessionMgmntRepo, httpLogger)
+		httpHandler = session_management.MakeHandler(sessionMgmnt)
 	)
 
 	// Now we're to the part of the func main where we want to start actually

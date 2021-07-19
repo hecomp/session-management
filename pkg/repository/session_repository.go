@@ -19,8 +19,9 @@ var (
 )
 
 // SessionMgmntRepository
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . SessionMgmntRepository
 type SessionMgmntRepository interface {
-	Create(sessionId string, request *SessionRequest) error
+	Create(sessionId string, expiration time.Time) error
 	Destroy(session *DestroyRequest) error
 	Extend(request *ExtendRequest) error
 	Exist(sessionId string) (bool, error)
@@ -29,22 +30,21 @@ type SessionMgmntRepository interface {
 
 // AuthRepository has the implementation of the db methods.
 type sessionMgmntRepository struct {
-	store *in_memory.InMemStore
+	store in_memory.MemStore
 	logger log.Logger
 }
 
 // NewSessionMgmntRepository
-func NewSessionMgmntRepository(store *in_memory.InMemStore, logger log.Logger) SessionMgmntRepository {
+func NewSessionMgmntRepository(store in_memory.MemStore, logger log.Logger) SessionMgmntRepository {
 	return &sessionMgmntRepository{store: store, logger: logger}
 }
 
 // Create session is stored in-memory
-func (s *sessionMgmntRepository) Create(sessionId string, request *SessionRequest) error {
+func (s *sessionMgmntRepository) Create(sessionId string, expiration time.Time) error {
 	if sessionId == "" {
 		return ErrEmpty
 	}
 
-	expiration := time.Unix(request.TTL, 0).UTC()
 	if err := s.store.Commit(sessionId, []byte(sessionId), expiration); err != nil {
 		return err
 	}
@@ -61,10 +61,7 @@ func (s *sessionMgmntRepository) Destroy(session *DestroyRequest) error {
 
 // Extend with the provided TTL
 func (s *sessionMgmntRepository) Extend(request *ExtendRequest) error {
-
-	expiration := time.Unix(request.TTL, 0).UTC()
-	s.store.Reset(request.SessionId, expiration)
-
+	expiration := time.Now().Add(time.Second * time.Duration(request.TTL))
 	b, found, err := s.store.Reset(request.SessionId, expiration)
 	if err != nil {
 		return err
@@ -95,5 +92,14 @@ func (s *sessionMgmntRepository) Exist(sessionId string) (bool, error) {
 
 //List returns a list of all the sessions that the service is currently tracking
 func (s *sessionMgmntRepository) List() (*Sessions, error) {
-	panic("implement me")
+	session := &Sessions{}
+	sessionMap, err := s.store.List()
+	if err != nil {
+		return nil, ErrNotFound
+	}
+	// put session map values into sessions list
+	for _, value := range sessionMap {
+		session.List = append(session.List, string(value.Oject))
+	}
+	return session, nil
 }

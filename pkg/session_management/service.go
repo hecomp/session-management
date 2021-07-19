@@ -3,19 +3,18 @@ package session_management
 import (
 	"errors"
 	"fmt"
-	. "github.com/hecomp/session-management/pkg/repository"
-	"time"
-
 	"github.com/go-kit/kit/log"
 	"github.com/google/uuid"
+	"time"
 
 	. "github.com/hecomp/session-management/internal/models"
+	. "github.com/hecomp/session-management/pkg/repository"
 )
 
 
 const (
-	DefaultTime = 30 * time.Second
-	MaxTTL      = 300 * time.Second
+	DefaultTime = 30
+	MaxTTL      = 300
 )
 
 var (
@@ -34,6 +33,7 @@ var (
 
 
 // SessionMgmntService is the interface that provides session management APIs.
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . SessionMgmntService
 type SessionMgmntService interface {
 	Create(session *SessionRequest) (*SessionMgmntResponse, error)
 	Destroy(session *DestroyRequest) (*SessionMgmntResponse, error)
@@ -55,12 +55,13 @@ func NewService(repo SessionMgmntRepository, logger log.Logger) SessionMgmntServ
 // Create
 func (s sessionMgmntService) Create(session *SessionRequest) (*SessionMgmntResponse, error) {
 	if session.TTL == 0 {// default should be 30 seconds
-		session.TTL = time.Now().Add(DefaultTime).UnixNano()
+		session.TTL = DefaultTime
 	}
 
-	sessionId := uuid.Must(uuid.NewRandom()).String()
-
-	if err := s.repo.Create(sessionId, session); err != nil {
+	sessionId := s.GenerateSessionId()
+	expiration := time.Now().Add(time.Second * time.Duration(session.TTL))
+	if err := s.repo.Create(sessionId, expiration); err != nil {
+		s.logger.Log("message", "unable to create session to in-memory store", "error", err)
 		return &SessionMgmntResponse{ Message: ErrEmpty.Error(), Err: err}, err
 	}
 
@@ -74,6 +75,7 @@ func (s sessionMgmntService) Destroy(session *DestroyRequest) (*SessionMgmntResp
 	}
 
 	if err := s.repo.Destroy(session); err != nil {
+		s.logger.Log("message", "unable to destroy session in the in-memory store", "error", err)
 		return &SessionMgmntResponse{ Message: ErrDestroy, Err: err}, err
 	}
 	return &SessionMgmntResponse{ Message: DestroySessionSuccess }, nil
@@ -86,23 +88,25 @@ func (s sessionMgmntService) Extend(request *ExtendRequest) (*SessionMgmntRespon
 	}
 
 	if request.TTL == 0 {
-		request.TTL = time.Now().Add(DefaultTime).UnixNano()
+		request.TTL = DefaultTime
 	}
 
-	ttlThreshold := time.Now().Add(MaxTTL).UnixNano()
-	if request.TTL > ttlThreshold {
-		request.TTL = time.Now().Add(MaxTTL).UnixNano()
+	if request.TTL > MaxTTL {
+		request.TTL = MaxTTL
 	}
 
 	found, err := s.repo.Exist(request.SessionId)
 	if err != nil {
-		return &SessionMgmntResponse{ Message: ErrEmpty.Error() }, err
+		s.logger.Log("message", "unable to find session to in-memory store", "error", err)
+		return &SessionMgmntResponse{ Message: ErrEmpty.Error(), Err: err }, err
 	}
 	if !found {
+		s.logger.Log("message", "not found session to in-memory store", "error", err)
 		return &SessionMgmntResponse{ Message: ErrNotFound.Error() }, ErrNotFound
 	}
 
 	if err := s.repo.Extend(request); err != nil {
+		s.logger.Log("message", "unable to extend session to in-memory store", "error", err)
 		return &SessionMgmntResponse{ Message: ErrExtend }, errors.New(ErrExtend)
 	}
 	return &SessionMgmntResponse{ Message: ExtendSessionSuccess }, nil
@@ -112,8 +116,14 @@ func (s sessionMgmntService) Extend(request *ExtendRequest) (*SessionMgmntRespon
 func (s sessionMgmntService) List() (*SessionMgmntResponse, error) {
 	sessions, err := s.repo.List()
 	if err != nil {
+		s.logger.Log("message", "unable to list sessions from in-memory store", "error", err)
 		return &SessionMgmntResponse{ Message: ErrList }, errors.New(ErrList)
 	}
 	return &SessionMgmntResponse{ Message: ListSessionSuccess, Data: sessions }, nil
+}
+
+// GenerateSessionId
+func (s *sessionMgmntService) GenerateSessionId() string {
+	return uuid.Must(uuid.NewRandom()).String()
 }
 
