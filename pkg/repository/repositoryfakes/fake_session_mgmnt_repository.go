@@ -46,16 +46,18 @@ type FakeSessionMgmntRepository struct {
 		result1 bool
 		result2 error
 	}
-	ExtendStub        func(*models.ExtendRequest) error
+	ExtendStub        func(*models.ExtendRequest) (bool, error)
 	extendMutex       sync.RWMutex
 	extendArgsForCall []struct {
 		arg1 *models.ExtendRequest
 	}
 	extendReturns struct {
-		result1 error
+		result1 bool
+		result2 error
 	}
 	extendReturnsOnCall map[int]struct {
-		result1 error
+		result1 bool
+		result2 error
 	}
 	ListStub        func() (*models.Sessions, error)
 	listMutex       sync.RWMutex
@@ -260,7 +262,7 @@ func (fake *FakeSessionMgmntRepository) ExistReturnsOnCall(i int, result1 bool, 
 	}{result1, result2}
 }
 
-func (fake *FakeSessionMgmntRepository) Extend(arg1 *models.ExtendRequest) error {
+func (fake *FakeSessionMgmntRepository) Extend(arg1 *models.ExtendRequest) (bool, error) {
 	fake.extendMutex.Lock()
 	ret, specificReturn := fake.extendReturnsOnCall[len(fake.extendArgsForCall)]
 	fake.extendArgsForCall = append(fake.extendArgsForCall, struct {
@@ -274,9 +276,9 @@ func (fake *FakeSessionMgmntRepository) Extend(arg1 *models.ExtendRequest) error
 		return stub(arg1)
 	}
 	if specificReturn {
-		return ret.result1
+		return ret.result1, ret.result2
 	}
-	return fakeReturns.result1
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeSessionMgmntRepository) ExtendCallCount() int {
@@ -285,7 +287,7 @@ func (fake *FakeSessionMgmntRepository) ExtendCallCount() int {
 	return len(fake.extendArgsForCall)
 }
 
-func (fake *FakeSessionMgmntRepository) ExtendCalls(stub func(*models.ExtendRequest) error) {
+func (fake *FakeSessionMgmntRepository) ExtendCalls(stub func(*models.ExtendRequest) (bool, error)) {
 	fake.extendMutex.Lock()
 	defer fake.extendMutex.Unlock()
 	fake.ExtendStub = stub
@@ -298,27 +300,30 @@ func (fake *FakeSessionMgmntRepository) ExtendArgsForCall(i int) *models.ExtendR
 	return argsForCall.arg1
 }
 
-func (fake *FakeSessionMgmntRepository) ExtendReturns(result1 error) {
+func (fake *FakeSessionMgmntRepository) ExtendReturns(result1 bool, result2 error) {
 	fake.extendMutex.Lock()
 	defer fake.extendMutex.Unlock()
 	fake.ExtendStub = nil
 	fake.extendReturns = struct {
-		result1 error
-	}{result1}
+		result1 bool
+		result2 error
+	}{result1, result2}
 }
 
-func (fake *FakeSessionMgmntRepository) ExtendReturnsOnCall(i int, result1 error) {
+func (fake *FakeSessionMgmntRepository) ExtendReturnsOnCall(i int, result1 bool, result2 error) {
 	fake.extendMutex.Lock()
 	defer fake.extendMutex.Unlock()
 	fake.ExtendStub = nil
 	if fake.extendReturnsOnCall == nil {
 		fake.extendReturnsOnCall = make(map[int]struct {
-			result1 error
+			result1 bool
+			result2 error
 		})
 	}
 	fake.extendReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
+		result1 bool
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeSessionMgmntRepository) List() (*models.Sessions, error) {

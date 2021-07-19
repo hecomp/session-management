@@ -9,6 +9,12 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 
 	. "github.com/hecomp/session-management/internal/models"
+	. "github.com/hecomp/session-management/pkg/repository"
+)
+
+const (
+	ContentType     = "Content-Type"
+	ApplicationJson = "application/json; charset=utf-8"
 )
 
 var (
@@ -115,12 +121,13 @@ func decodeHTTPListRequest(_ context.Context, r *http.Request) (interface{}, err
 }
 
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	e := response.(*SessionMgmntResponse)
-	if e.Err != nil {
-		encodeError(ctx, e.Err, w)
+	resp := response.(*SessionMgmntResponse)
+	if resp.Err != nil {
+		encodeError(ctx, resp.Err, w)
 		return nil
 	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set(ContentType, ApplicationJson)
+	w.WriteHeader(resp.StatusCode)
 	return json.NewEncoder(w).Encode(response)
 }
 
@@ -130,17 +137,22 @@ type errorer interface {
 
 // encode errors from business-logic
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	var statusCode int
+	w.Header().Set(ContentType, ApplicationJson)
 	switch err {
-	case ErrUnknown:
+	case ErrNotFound:
 		w.WriteHeader(http.StatusNotFound)
+		statusCode = http.StatusNotFound
 	case ErrInvalidArgument:
 		w.WriteHeader(http.StatusBadRequest)
+		statusCode = http.StatusBadRequest
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
+		statusCode = http.StatusInternalServerError
 	}
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"error": err.Error(),
+		"status_code": statusCode,
 	})
 }
 

@@ -8,19 +8,19 @@ import (
 	"github.com/hecomp/session-management/internal/models"
 )
 
-//loggingService
+//loggingService has the implementation of the logging middleware methods.
 type loggingService struct {
 	logger log.Logger
 	SessionMgmntService
 }
 
-//NewLoggingService
+//NewLoggingService create a instance of logging service
 func NewLoggingService(logger log.Logger, s SessionMgmntService) SessionMgmntService {
 	return &loggingService{logger: logger, SessionMgmntService: s}
 }
 
-// Create
-func (s *loggingService) Create(session *models.SessionRequest) (sig *SessionMgmntResponse, err error)  {
+// Create session is stored in-memory
+func (s *loggingService) Create(session *models.SessionRequest) (sig string, err error)  {
 	defer func(begin time.Time) {
 		s.logger.Log(
 			"method", "create",
@@ -31,8 +31,8 @@ func (s *loggingService) Create(session *models.SessionRequest) (sig *SessionMgm
 	return s.SessionMgmntService.Create(session)
 }
 
-//Destroy
-func (s *loggingService) Destroy(session *models.DestroyRequest) (sig *SessionMgmntResponse, err error)  {
+//Destroy remove the session from its cache
+func (s *loggingService) Destroy(session *models.DestroyRequest) (err error)  {
 	defer func(begin time.Time) {
 		s.logger.Log(
 			"method", "destroy",
@@ -43,8 +43,8 @@ func (s *loggingService) Destroy(session *models.DestroyRequest) (sig *SessionMg
 	return s.SessionMgmntService.Destroy(session)
 }
 
-//Extend
-func (s *loggingService) Extend(session *models.ExtendRequest) (sig *SessionMgmntResponse, err error)  {
+//Extend session id with the provided TTL
+func (s *loggingService) Extend(session *models.ExtendRequest) (err error)  {
 	defer func(begin time.Time) {
 		s.logger.Log(
 			"method", "extend",
@@ -56,7 +56,7 @@ func (s *loggingService) Extend(session *models.ExtendRequest) (sig *SessionMgmn
 }
 
 //List
-func (s *loggingService) List() (sig *SessionMgmntResponse, err error)  {
+func (s *loggingService) List() (sig *models.Sessions, err error)  {
 	defer func(begin time.Time) {
 		s.logger.Log(
 			"method", "list",

@@ -11,6 +11,10 @@ Basic session management service using golang
     + [Run Test](#run-test)
     + [Genrate Mock with counterfeiter](#generate-mock-using-counterfeiter)
     + [APIs](#apis)
+        * [Create](#create)
+        * [Destroy](#destroy)
+        * [Extend](#extend)
+        * [List](#list)
     
     
     
@@ -46,12 +50,12 @@ $ go run ./cmd/main.go
 $ go get -u github.com/onsi/ginkgo/ginkgo 
 # fetch the matcher library
 $ go get -u github.com/onsi/gomega/...    
-# run all the ginkgo test in the directory
+# run all the ginkgo tests in the directory
 $ ginkgo -r
 # run ginkgo with coverage (verbose)
 $ ginkgo -r -v -cover
 # run ginkgo report with HTML output
-$ go test ./... -coverprofile=coverage.out
+$ go tests ./... -coverprofile=coverage.out
 $ go tool cover -html=coverage.out -o coverage.html
 # run ginkgo report with HTML output using original commands
 $ ginkgo -r -v -cover -coverprofile=coverage.out -outputdir=. # Generates coverage report
@@ -125,6 +129,9 @@ Expect(err).To(Equal(errors.New("the-error")))
 | List     | GET   | /list      |
 
 Postmant
+
+#### Create
+
 ```
 http://localhost:8081/create
 ```
@@ -137,12 +144,16 @@ Request
 Response
 ```json
 {
-    "Message": "Session Created Successfully",
+    "Message": "session created successfully",
     "data": {
-        "session_id": "90660b89-100e-4f8f-9801-2524df6fbe34"
-    }
+        "session_id": "0495cb09-232d-4f6a-ad1a-eb9eadc4266d"
+    },
+    "status_code": 201
 }
 ```
+
+#### Destroy
+
 ```
 http://localhost:8081/destroy
 ```
@@ -155,10 +166,13 @@ Request
 Response
 ```json
 {
-    "Message": "Session Destroyed Successfully",
-    "data": null
+    "Message": "session destroyed successfully",
+    "data": null,
+    "status_code": 200
 }
 ```
+
+#### Extend
 
 ```
 http://localhost:8081/extend
@@ -174,10 +188,13 @@ Request
 Response
 ```json
 {
-    "Message": "Session Extended Successfully",
-    "data": null
+    "Message": "session extended successfully",
+    "data": null,
+    "status_code": 200
 }
 ```
+
+#### List
 
 ```
 http://localhost:8081/list

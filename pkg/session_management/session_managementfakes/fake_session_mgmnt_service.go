@@ -9,31 +9,29 @@ import (
 )
 
 type FakeSessionMgmntService struct {
-	CreateStub        func(*models.SessionRequest) (*session_management.SessionMgmntResponse, error)
+	CreateStub        func(*models.SessionRequest) (string, error)
 	createMutex       sync.RWMutex
 	createArgsForCall []struct {
 		arg1 *models.SessionRequest
 	}
 	createReturns struct {
-		result1 *session_management.SessionMgmntResponse
+		result1 string
 		result2 error
 	}
 	createReturnsOnCall map[int]struct {
-		result1 *session_management.SessionMgmntResponse
+		result1 string
 		result2 error
 	}
-	DestroyStub        func(*models.DestroyRequest) (*session_management.SessionMgmntResponse, error)
+	DestroyStub        func(*models.DestroyRequest) error
 	destroyMutex       sync.RWMutex
 	destroyArgsForCall []struct {
 		arg1 *models.DestroyRequest
 	}
 	destroyReturns struct {
-		result1 *session_management.SessionMgmntResponse
-		result2 error
+		result1 error
 	}
 	destroyReturnsOnCall map[int]struct {
-		result1 *session_management.SessionMgmntResponse
-		result2 error
+		result1 error
 	}
 	ExtendStub        func(*models.ExtendRequest) (*session_management.SessionMgmntResponse, error)
 	extendMutex       sync.RWMutex
@@ -64,7 +62,7 @@ type FakeSessionMgmntService struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeSessionMgmntService) Create(arg1 *models.SessionRequest) (*session_management.SessionMgmntResponse, error) {
+func (fake *FakeSessionMgmntService) Create(arg1 *models.SessionRequest) (string, error) {
 	fake.createMutex.Lock()
 	ret, specificReturn := fake.createReturnsOnCall[len(fake.createArgsForCall)]
 	fake.createArgsForCall = append(fake.createArgsForCall, struct {
@@ -89,7 +87,7 @@ func (fake *FakeSessionMgmntService) CreateCallCount() int {
 	return len(fake.createArgsForCall)
 }
 
-func (fake *FakeSessionMgmntService) CreateCalls(stub func(*models.SessionRequest) (*session_management.SessionMgmntResponse, error)) {
+func (fake *FakeSessionMgmntService) CreateCalls(stub func(*models.SessionRequest) (string, error)) {
 	fake.createMutex.Lock()
 	defer fake.createMutex.Unlock()
 	fake.CreateStub = stub
@@ -102,33 +100,33 @@ func (fake *FakeSessionMgmntService) CreateArgsForCall(i int) *models.SessionReq
 	return argsForCall.arg1
 }
 
-func (fake *FakeSessionMgmntService) CreateReturns(result1 *session_management.SessionMgmntResponse, result2 error) {
+func (fake *FakeSessionMgmntService) CreateReturns(result1 string, result2 error) {
 	fake.createMutex.Lock()
 	defer fake.createMutex.Unlock()
 	fake.CreateStub = nil
 	fake.createReturns = struct {
-		result1 *session_management.SessionMgmntResponse
+		result1 string
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeSessionMgmntService) CreateReturnsOnCall(i int, result1 *session_management.SessionMgmntResponse, result2 error) {
+func (fake *FakeSessionMgmntService) CreateReturnsOnCall(i int, result1 string, result2 error) {
 	fake.createMutex.Lock()
 	defer fake.createMutex.Unlock()
 	fake.CreateStub = nil
 	if fake.createReturnsOnCall == nil {
 		fake.createReturnsOnCall = make(map[int]struct {
-			result1 *session_management.SessionMgmntResponse
+			result1 string
 			result2 error
 		})
 	}
 	fake.createReturnsOnCall[i] = struct {
-		result1 *session_management.SessionMgmntResponse
+		result1 string
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeSessionMgmntService) Destroy(arg1 *models.DestroyRequest) (*session_management.SessionMgmntResponse, error) {
+func (fake *FakeSessionMgmntService) Destroy(arg1 *models.DestroyRequest) error {
 	fake.destroyMutex.Lock()
 	ret, specificReturn := fake.destroyReturnsOnCall[len(fake.destroyArgsForCall)]
 	fake.destroyArgsForCall = append(fake.destroyArgsForCall, struct {
@@ -142,9 +140,9 @@ func (fake *FakeSessionMgmntService) Destroy(arg1 *models.DestroyRequest) (*sess
 		return stub(arg1)
 	}
 	if specificReturn {
-		return ret.result1, ret.result2
+		return ret.result1
 	}
-	return fakeReturns.result1, fakeReturns.result2
+	return fakeReturns.result1
 }
 
 func (fake *FakeSessionMgmntService) DestroyCallCount() int {
@@ -153,7 +151,7 @@ func (fake *FakeSessionMgmntService) DestroyCallCount() int {
 	return len(fake.destroyArgsForCall)
 }
 
-func (fake *FakeSessionMgmntService) DestroyCalls(stub func(*models.DestroyRequest) (*session_management.SessionMgmntResponse, error)) {
+func (fake *FakeSessionMgmntService) DestroyCalls(stub func(*models.DestroyRequest) error) {
 	fake.destroyMutex.Lock()
 	defer fake.destroyMutex.Unlock()
 	fake.DestroyStub = stub
@@ -166,30 +164,27 @@ func (fake *FakeSessionMgmntService) DestroyArgsForCall(i int) *models.DestroyRe
 	return argsForCall.arg1
 }
 
-func (fake *FakeSessionMgmntService) DestroyReturns(result1 *session_management.SessionMgmntResponse, result2 error) {
+func (fake *FakeSessionMgmntService) DestroyReturns(result1 error) {
 	fake.destroyMutex.Lock()
 	defer fake.destroyMutex.Unlock()
 	fake.DestroyStub = nil
 	fake.destroyReturns = struct {
-		result1 *session_management.SessionMgmntResponse
-		result2 error
-	}{result1, result2}
+		result1 error
+	}{result1}
 }
 
-func (fake *FakeSessionMgmntService) DestroyReturnsOnCall(i int, result1 *session_management.SessionMgmntResponse, result2 error) {
+func (fake *FakeSessionMgmntService) DestroyReturnsOnCall(i int, result1 error) {
 	fake.destroyMutex.Lock()
 	defer fake.destroyMutex.Unlock()
 	fake.DestroyStub = nil
 	if fake.destroyReturnsOnCall == nil {
 		fake.destroyReturnsOnCall = make(map[int]struct {
-			result1 *session_management.SessionMgmntResponse
-			result2 error
+			result1 error
 		})
 	}
 	fake.destroyReturnsOnCall[i] = struct {
-		result1 *session_management.SessionMgmntResponse
-		result2 error
-	}{result1, result2}
+		result1 error
+	}{result1}
 }
 
 func (fake *FakeSessionMgmntService) Extend(arg1 *models.ExtendRequest) (*session_management.SessionMgmntResponse, error) {

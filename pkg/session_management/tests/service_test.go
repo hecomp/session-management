@@ -1,18 +1,17 @@
-package test_test
+package tests_test
 
 import (
 	"errors"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	. "github.com/hecomp/session-management/internal/models"
+	. "github.com/hecomp/session-management/pkg/repository"
 	"github.com/hecomp/session-management/pkg/repository/repositoryfakes"
 	. "github.com/hecomp/session-management/pkg/session_management"
 	"github.com/hecomp/session-management/pkg/test"
-	. "github.com/hecomp/session-management/pkg/repository"
 )
 
 func TestService(t *testing.T) {
@@ -36,31 +35,26 @@ var _ = Describe("Service", func() {
 	})
 
 	Describe("Create Session", func() {
-
-		//sessionMgmntResp := &SessionMgmntResponse{
-		//	Message: "",
-		//	Data: nil,
-		//	Err: nil,
-		//}
 		Context("Create()", func() {
 			When("the API os called with TTL as param", func() {
 				It("stores an unique sessionId in-memory store", func() {
 					req := &SessionRequest{
 						TTL: 50,
 					}
+
 					s.fakeRepo.CreateReturns(nil)
-					res, err := s.service.Create(req)
+					sessionId, err := s.service.Create(req)
 					Expect(err).To(BeNil())
-					Expect(res.Message).To(Equal(CreateSessionSuccess))
+					Expect(sessionId).ToNot(BeEmpty())
 				})
 				It("error stores an unique sessionId in-memory store", func() {
 					req := &SessionRequest{
 						TTL: 50,
 					}
 					s.fakeRepo.CreateReturns(errors.New("Error create"))
-					res, err := s.service.Create(req)
+					sessionId, err := s.service.Create(req)
 					Expect(err).ToNot(BeNil())
-					Expect(res.Message).To(Equal(ErrEmpty.Error()))
+					Expect(sessionId).To(BeEmpty())
 				})
 			})
 		})
@@ -73,20 +67,50 @@ var _ = Describe("Service", func() {
 				session := &DestroyRequest{
 					SessionId: uniqueUUID,
 				}
+				s.fakeRepo.ExistReturns(true, nil)
 				s.fakeRepo.DestroyReturns(nil)
-				res, err := s.service.Destroy(session)
+				err := s.service.Destroy(session)
 				Expect(err).To(BeNil())
-				Expect(res.Message).To(Equal(DestroySessionSuccess))
+			})
+			It("error empty sessionId sent", func() {
+				session := &DestroyRequest{
+					SessionId: "",
+				}
+				s.fakeRepo.ExistReturns(true, errors.New("empty sessionId"))
+				err := s.service.Destroy(session)
+				Expect(err).ToNot(BeNil())
+				Expect(err).To(Equal(ErrEmpty))
+			})
+			It("error exist an unique sessionId in-memory store", func() {
+				uniqueUUID := "90660b89-100e-4f8f-9801-2524df6fbe34"
+				session := &DestroyRequest{
+					SessionId: uniqueUUID,
+				}
+				s.fakeRepo.ExistReturns(true, errors.New("error exist"))
+				err := s.service.Destroy(session)
+				Expect(err).ToNot(BeNil())
+				Expect(err).To(Equal(ErrExist))
+			})
+			It("not found an unique sessionId in-memory store", func() {
+				uniqueUUID := "90660b89-100e-4f8f-9801-2524df6fbe34"
+				session := &DestroyRequest{
+					SessionId: uniqueUUID,
+				}
+				s.fakeRepo.ExistReturns(false, nil)
+				err := s.service.Destroy(session)
+				Expect(err).ToNot(BeNil())
+				Expect(err).To(Equal(ErrNotFound))
 			})
 			It("error destroy an unique sessionId in-memory store", func() {
 				uniqueUUID := "90660b89-100e-4f8f-9801-2524df6fbe34"
 				session := &DestroyRequest{
 					SessionId: uniqueUUID,
 				}
-				s.fakeRepo.DestroyReturns(errors.New("Error destroy"))
-				res, err := s.service.Destroy(session)
+				s.fakeRepo.ExistReturns(true, nil)
+				s.fakeRepo.DestroyReturns(errors.New("error destroy"))
+				err := s.service.Destroy(session)
 				Expect(err).ToNot(BeNil())
-				Expect(res.Message).To(Equal(ErrDestroy))
+				Expect(err).To(Equal(ErrDestroy))
 			})
 		})
 	})
@@ -99,43 +123,39 @@ var _ = Describe("Service", func() {
 					TTL: 100,
 					SessionId: uniqueUUID,
 				}
-				s.fakeRepo.ExistReturns(true, nil)
-				s.fakeRepo.ExtendReturns(nil)
-				res, err := s.service.Extend(session)
+				s.fakeRepo.ExtendReturns(true, nil)
+				err := s.service.Extend(session)
 				Expect(err).To(BeNil())
-				Expect(res.Message).To(Equal(ExtendSessionSuccess))
 			})
-			It("error  session id empty extend an unique sessionId in-memory store", func() {
-				uniqueUUID := "90660b89-100e-4f8f-9801-2524df6fbe34"
+			It("error empty session id extend sent", func() {
 				session := &ExtendRequest{
-					SessionId: uniqueUUID,
+					SessionId: "",
 				}
-				s.fakeRepo.ExistReturns(false, errors.New("Error  session id empty"))
-				res, err := s.service.Extend(session)
+				s.fakeRepo.ExtendReturns(false, errors.New("error error empty session id"))
+				err := s.service.Extend(session)
 				Expect(err).ToNot(BeNil())
-				Expect(res.Message).To(Equal(ErrEmpty.Error()))
+				Expect(err).To(Equal(ErrEmpty))
 			})
 			It("error not found empty extend an unique sessionId in-memory store", func() {
 				uniqueUUID := "90660b89-100e-4f8f-9801-2524df6fbe34"
 				session := &ExtendRequest{
 					SessionId: uniqueUUID,
 				}
-				s.fakeRepo.ExistReturns(false, nil)
+				s.fakeRepo.ExtendReturns(false, nil)
 
-				res, err := s.service.Extend(session)
+				err := s.service.Extend(session)
 				Expect(err).ToNot(BeNil())
-				Expect(res.Message).To(Equal(ErrNotFound.Error()))
+				Expect(err).To(Equal(ErrNotFound))
 			})
 			It("error extend an unique sessionId in-memory store", func() {
 				uniqueUUID := "90660b89-100e-4f8f-9801-2524df6fbe34"
 				session := &ExtendRequest{
 					SessionId: uniqueUUID,
 				}
-				s.fakeRepo.ExistReturns(true, nil)
-				s.fakeRepo.ExtendReturns(errors.New("error extend session"))
-				res, err := s.service.Extend(session)
+				s.fakeRepo.ExtendReturns(false, errors.New("error extend session"))
+				err := s.service.Extend(session)
 				Expect(err).ToNot(BeNil())
-				Expect(res.Message).To(Equal(ErrExtend))
+				Expect(err).To(Equal(ErrExtend))
 			})
 		})
 	})
@@ -157,7 +177,16 @@ var _ = Describe("Service", func() {
 				s.fakeRepo.ListReturns(sessions, nil)
 				res, err := s.service.List()
 				Expect(err).To(BeNil())
-				Expect(res.Message).To(Equal(ListSessionSuccess))
+				Expect(res).To(Equal(sessions))
+			})
+			It("error not found list in-memory store", func() {
+				sessionMap := map[string]Item{}
+				sessions := test.ConvertMapToList(sessionMap)
+				s.fakeRepo.ListReturns(sessions, nil)
+				res, err := s.service.List()
+				Expect(err).ToNot(BeNil())
+				Expect(res).To(BeNil())
+				Expect(err).To(Equal(ErrNotFound))
 			})
 			It("error list an unique sessionId in-memory store", func() {
 				sessionMap := map[string]Item{}
@@ -165,7 +194,7 @@ var _ = Describe("Service", func() {
 				s.fakeRepo.ListReturns(sessions, errors.New("Error destroy"))
 				res, err := s.service.List()
 				Expect(err).ToNot(BeNil())
-				Expect(res.Message).To(Equal(ErrList))
+				Expect(res).To(BeNil())
 			})
 		})
 	})

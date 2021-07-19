@@ -13,9 +13,10 @@ import (
 
 var (
 	// ErrEmpty is returned when input string is empty
-	ErrEmpty = errors.New("Empty session id")
-	ErrNotFound = errors.New("Session id not found")
-	ErrInvalidSessionId = errors.New("Invalid session id")
+	ErrEmpty = errors.New("empty session id")
+	ErrExist = errors.New("error during find")
+	ErrNotFound = errors.New("session id not found")
+	ErrInvalidSessionId = errors.New("envalid session id")
 )
 
 // SessionMgmntRepository
@@ -23,7 +24,7 @@ var (
 type SessionMgmntRepository interface {
 	Create(sessionId string, expiration time.Time) error
 	Destroy(session *DestroyRequest) error
-	Extend(request *ExtendRequest) error
+	Extend(request *ExtendRequest) (bool, error)
 	Exist(sessionId string) (bool, error)
 	List() (*Sessions, error)
 }
@@ -34,7 +35,7 @@ type sessionMgmntRepository struct {
 	logger log.Logger
 }
 
-// NewSessionMgmntRepository
+// NewSessionMgmntRepository create a instance of session management repository
 func NewSessionMgmntRepository(store in_memory.MemStore, logger log.Logger) SessionMgmntRepository {
 	return &sessionMgmntRepository{store: store, logger: logger}
 }
@@ -59,30 +60,30 @@ func (s *sessionMgmntRepository) Destroy(session *DestroyRequest) error {
 	return nil
 }
 
-// Extend with the provided TTL
-func (s *sessionMgmntRepository) Extend(request *ExtendRequest) error {
+// Extend session id with the provided TTL
+func (s *sessionMgmntRepository) Extend(request *ExtendRequest) (bool, error) {
 	expiration := time.Now().Add(time.Second * time.Duration(request.TTL))
-	b, found, err := s.store.Reset(request.SessionId, expiration)
+	obj, found, err := s.store.Reset(request.SessionId, expiration)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if found != true {
-		return ErrNotFound
+		return false, nil
 	}
-	if bytes.Equal(b, []byte(request.SessionId)) == false {
-		return ErrInvalidSessionId
+	if bytes.Equal(obj, []byte(request.SessionId)) == false {
+		return false, ErrInvalidSessionId
 	}
-	return nil
+	return true, nil
 }
 
-// Exist
+// Exist if the session exists
 func (s *sessionMgmntRepository) Exist(sessionId string) (bool, error) {
 	b, found, err := s.store.Find(sessionId)
 	if err != nil {
 		return false, err
 	}
 	if found != true {
-		return false, ErrNotFound
+		return false, nil
 	}
 	if bytes.Equal(b, []byte(sessionId)) == false {
 		return false, ErrInvalidSessionId
@@ -95,7 +96,7 @@ func (s *sessionMgmntRepository) List() (*Sessions, error) {
 	session := &Sessions{}
 	sessionMap, err := s.store.List()
 	if err != nil {
-		return nil, ErrNotFound
+		return nil, err
 	}
 	// put session map values into sessions list
 	for _, value := range sessionMap {
