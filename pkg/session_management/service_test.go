@@ -1,7 +1,8 @@
-package tests_test
+package session_management_test
 
 import (
 	"errors"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"testing"
@@ -120,7 +121,7 @@ var _ = Describe("Service", func() {
 			It("extend an unique sessionId in-memory store", func() {
 				uniqueUUID := "90660b89-100e-4f8f-9801-2524df6fbe34"
 				session := &ExtendRequest{
-					TTL: 100,
+					TTL:       100,
 					SessionId: uniqueUUID,
 				}
 				s.fakeRepo.ExtendReturns(true, nil)
@@ -168,7 +169,7 @@ var _ = Describe("Service", func() {
 
 				sessionMap := map[string]Item{
 					"90660b89-100e-4f8f-9801-2524df6fbe34": {
-						Oject: []byte(uniqueUUID),
+						Oject:      []byte(uniqueUUID),
 						Expiration: expiration.UnixNano(),
 					},
 				}
